@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -72,7 +72,7 @@ export default function Login() {
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@gullartlettering.com"
+                placeholder="seu@email.com"
                 required
                 className="input"
               />
@@ -118,20 +118,6 @@ export default function Login() {
               {loading ? 'Validando Acesso...' : 'Entrar no Estúdio'}
             </button>
           </form>
-
-          {/* Atalho de acesso padrão */}
-          <div className="mt-4 pt-4 border-t border-border-subtle text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('admin@gullartlettering.com');
-                setPassword('senha123');
-              }}
-              className="text-[11px] text-text-muted hover:text-apple-blue transition-colors"
-            >
-              Preencher acesso padrão (admin@gullartlettering.com)
-            </button>
-          </div>
         </div>
 
         <p className="mt-6 text-center text-[12px] text-text-muted">
