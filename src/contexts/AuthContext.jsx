@@ -10,6 +10,15 @@ const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
+export function isPublicRoute(pathname) {
+  if (!pathname) return false;
+  return (
+    pathname === '/login' ||
+    pathname.startsWith('/reservar') ||
+    pathname.startsWith('/comprovante')
+  );
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +26,7 @@ export const AuthProvider = ({ children }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    const publicPage = isPublicRoute(pathname);
     const token = Cookies.get('token');
     const savedUser = Cookies.get('user');
 
@@ -26,9 +36,9 @@ export const AuthProvider = ({ children }) => {
       } catch {
         Cookies.remove('token');
         Cookies.remove('user');
-        if (pathname !== '/login') router.push('/login');
+        if (!publicPage) router.push('/login');
       }
-    } else if (pathname !== '/login') {
+    } else if (!publicPage) {
       router.push('/login');
     }
     setLoading(false);

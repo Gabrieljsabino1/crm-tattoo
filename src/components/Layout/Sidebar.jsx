@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -18,7 +18,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, isPublicRoute } from '../../contexts/AuthContext';
 import { useSidebar } from '../../contexts/SidebarContext';
 
 function useIsMobile(breakpointPx = 768) {
@@ -178,7 +178,7 @@ export default function Sidebar() {
     };
   }, [mobileOpen]);
 
-  if (!user || pathname === '/login') return null;
+  if (!user || isPublicRoute(pathname)) return null;
 
   const filterNav = (items) => items.filter((item) => (!item.adminOnly ? true : isAdmin));
 

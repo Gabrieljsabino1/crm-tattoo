@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/server/prisma';
 import { requireAuth } from '../../../lib/server/auth';
+import { generateReservaCode, generateReservaToken } from '../../../lib/server/reserva';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,7 @@ export async function GET(request) {
           (a.descricao || '').toLowerCase().includes(term) ||
           a.localCorpo.toLowerCase().includes(term) ||
           a.estilo.toLowerCase().includes(term) ||
+          (a.codigoReserva || '').toLowerCase().includes(term) ||
           a.cliente.nome.toLowerCase().includes(term) ||
           a.cliente.telefone.toLowerCase().includes(term) ||
           (a.cliente.instagram || '').toLowerCase().includes(term)
@@ -125,6 +127,9 @@ export async function POST(request) {
     const agendamento = await prisma.agendamento.create({
       data: {
         codigo: nextCodigo,
+        codigoReserva: generateReservaCode(),
+        tokenReserva: generateReservaToken(),
+        origem: 'MANUAL',
         clienteId,
         tatuadorId: tatuadorId || user?.id || null,
         titulo: String(titulo).trim(),

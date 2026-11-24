@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from 'react';
 import {
@@ -20,6 +20,10 @@ import {
   Wallet,
   Play,
   AlertCircle,
+  ShieldCheck,
+  Copy,
+  ExternalLink,
+  Share2,
 } from 'lucide-react';
 import { api, resolveImageUrl } from '../../services/api';
 import { useToast } from './Toast';
@@ -132,6 +136,30 @@ export default function AgendamentoDetailModal({
   const activeTabMeta = IMAGE_TABS.find((t) => t.key === activeImgTab) || IMAGE_TABS[0];
   const whatsappClean = (agendamento.cliente?.telefone || '').replace(/\D/g, '');
   const instaHandle = (agendamento.cliente?.instagram || '').replace(/^@/, '');
+  const comprovanteUrl =
+    agendamento.tokenReserva && typeof window !== 'undefined'
+      ? `${window.location.origin}/comprovante/${agendamento.tokenReserva}`
+      : agendamento.tokenReserva
+      ? `/comprovante/${agendamento.tokenReserva}`
+      : '';
+
+  async function handleCopyComprovante() {
+    if (!comprovanteUrl) return;
+    try {
+      await navigator.clipboard.writeText(comprovanteUrl);
+      toast('Link do comprovante copiado!', 'success');
+    } catch {
+      toast('Não foi possível copiar o link.', 'error');
+    }
+  }
+
+  const whatsappComprovanteText = encodeURIComponent(
+    `Olá ${agendamento.cliente?.nome || ''}! Segue o comprovante oficial da sua reserva na Gullart Lettering:\n` +
+      `Protocolo: ${agendamento.codigoReserva || `#${agendamento.codigo}`}\n` +
+      `Data e Horário: ${formatDateTimeBR(agendamento.dataHora)}\n` +
+      `Sessão: ${agendamento.titulo}\n` +
+      `Acesse seu comprovante aqui: ${comprovanteUrl}`
+  );
 
   return (
     <>
@@ -148,6 +176,11 @@ export default function AgendamentoDetailModal({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-[11px] font-mono text-text-muted">#{agendamento.codigo}</span>
+                {agendamento.codigoReserva && (
+                  <span className="text-[11px] font-mono text-apple-blue font-semibold">
+                    {agendamento.codigoReserva}
+                  </span>
+                )}
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusMeta.badgeClass}`}>
                   {statusMeta.label}
                 </span>
@@ -186,6 +219,60 @@ export default function AgendamentoDetailModal({
 
           {/* Conteúdo com Scroll */}
           <div className="p-5 overflow-y-auto space-y-5 flex-1">
+            {/* Barra de Prova de Reserva / Comprovante */}
+            {agendamento.tokenReserva && (
+              <div className="p-3.5 rounded-xl bg-apple-blue/10 border border-apple-blue/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5 text-xs">
+                  <ShieldCheck
+                    size={17}
+                    className={`shrink-0 mt-0.5 ${
+                      agendamento.confirmadoPeloCliente ? 'text-ios-green' : 'text-apple-blue'
+                    }`}
+                  />
+                  <div>
+                    <p className="font-semibold text-white">
+                      {agendamento.confirmadoPeloCliente
+                        ? 'Reserva Confirmada pelo Cliente'
+                        : 'Comprovante de Reserva Disponível'}
+                      {agendamento.origem === 'LINK_PUBLICO' ? ' • Pré-cadastro Online' : ''}
+                    </p>
+                    <p className="text-[11px] text-text-secondary mt-0.5">
+                      {agendamento.confirmadoPeloClienteEm
+                        ? `Confirmado digitalmente em ${formatDateTimeBR(agendamento.confirmadoPeloClienteEm)}`
+                        : 'Envie o link do comprovante para o cliente confirmar presença e guardar como prova do horário.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyComprovante}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#13101B] border border-border text-[11px] font-semibold text-white hover:border-apple-blue inline-flex items-center gap-1 transition-colors"
+                  >
+                    <Copy size={12} /> Copiar Link
+                  </button>
+                  <a
+                    href={`/comprovante/${agendamento.tokenReserva}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#13101B] border border-border text-[11px] font-semibold text-purple-300 hover:border-apple-blue inline-flex items-center gap-1 transition-colors"
+                  >
+                    <ExternalLink size={12} /> Abrir
+                  </a>
+                  {whatsappClean && (
+                    <a
+                      href={`https://wa.me/55${whatsappClean}?text=${whatsappComprovanteText}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 rounded-lg bg-ios-green/15 border border-ios-green/30 text-[11px] font-semibold text-ios-green hover:bg-ios-green/25 inline-flex items-center gap-1 transition-colors"
+                    >
+                      <Share2 size={12} /> Enviar
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Grid Superior: Informações da Sessão & Cliente */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Detalhes da Tattoo & Horário */}
@@ -267,7 +354,7 @@ export default function AgendamentoDetailModal({
                           href={`https://instagram.com/${instaHandle}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2 py-1.5 rounded-lg bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[11px] font-semibold flex items-center gap-1 hover:bg-purple-500/25 transition-colors"
+                          className="px-2.5 py-1.5 rounded-lg bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[11px] font-semibold flex items-center gap-1 hover:bg-purple-500/25 transition-colors"
                         >
                           <AtSign size={12} /> {instaHandle}
                         </a>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../../lib/server/prisma';
 import { requireAuth } from '../../../../../lib/server/auth';
+import { generateReservaCode, generateReservaToken } from '../../../../../lib/server/reserva';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,9 @@ export async function POST(request, { params }) {
     const agendamento = await prisma.agendamento.create({
       data: {
         codigo: nextCodigo,
+        codigoReserva: generateReservaCode(),
+        tokenReserva: generateReservaToken(),
+        origem: 'MANUAL',
         clienteId: orcamento.clienteId,
         tatuadorId: user?.id || null,
         titulo: orcamento.titulo,

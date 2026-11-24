@@ -38,34 +38,40 @@ model Cliente {
 }
 
 model Agendamento {
-  id                String              @id @default(uuid())
-  codigo            Int                 @default(1)
-  clienteId         String
-  tatuadorId        String?
+  id                       String              @id @default(uuid())
+  codigo                   Int                 @default(1)
+  codigoReserva            String?             @unique
+  tokenReserva             String?             @unique
+  origem                   String              @default("MANUAL") // MANUAL | LINK_PUBLICO
+  confirmadoPeloCliente    Boolean             @default(false)
+  confirmadoPeloClienteEm  DateTime?
 
-  titulo            String
-  descricao         String?
-  dataHora          DateTime
-  duracaoMinutos    Int                 @default(120)
-  localCorpo        String
-  estilo            String              @default("Lettering")
-  tamanhoCm         String?
+  clienteId                String
+  tatuadorId               String?
 
-  valorTotal        Float               @default(0)
-  valorSinal        Float               @default(0)
-  sinalPago         Boolean             @default(false)
-  formaPagamento    String?
+  titulo                   String
+  descricao                String?
+  dataHora                 DateTime
+  duracaoMinutos           Int                 @default(120)
+  localCorpo               String
+  estilo                   String              @default("Lettering")
+  tamanhoCm                String?
 
-  status            String              @default("CONFIRMADO") // PENDENTE | CONFIRMADO | EM_ANDAMENTO | CONCLUIDO | CANCELADO
-  observacoesSessao String?
-  concluidoEm       DateTime?
+  valorTotal               Float               @default(0)
+  valorSinal               Float               @default(0)
+  sinalPago                Boolean             @default(false)
+  formaPagamento           String?
 
-  cliente           Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  tatuador          User?               @relation(fields: [tatuadorId], references: [id], onDelete: SetNull)
-  imagens           ImagemAgendamento[]
+  status                   String              @default("CONFIRMADO") // PENDENTE | CONFIRMADO | EM_ANDAMENTO | CONCLUIDO | CANCELADO
+  observacoesSessao        String?
+  concluidoEm              DateTime?
 
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  cliente                  Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tatuador                 User?               @relation(fields: [tatuadorId], references: [id], onDelete: SetNull)
+  imagens                  ImagemAgendamento[]
+
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
 }
 
 model ImagemAgendamento {

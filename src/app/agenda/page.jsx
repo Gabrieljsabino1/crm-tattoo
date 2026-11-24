@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -14,13 +14,16 @@ import {
   Palette,
   Camera,
   Phone,
-  CheckCircle2,
   Eye,
   Sparkles,
+  Link2,
+  ShieldCheck,
+  FileCheck2,
 } from 'lucide-react';
 import { api, resolveImageUrl } from '../../services/api';
 import AgendamentoDetailModal from '../../components/UI/AgendamentoDetailModal';
 import AgendamentoFormModal from '../../components/UI/AgendamentoFormModal';
+import ShareBookingLinkModal from '../../components/UI/ShareBookingLinkModal';
 import {
   ESTILOS_TATTOO,
   STATUS_AGENDAMENTO,
@@ -68,6 +71,7 @@ function AgendaContent() {
   const [selectedAgendamento, setSelectedAgendamento] = useState(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [editingAgendamento, setEditingAgendamento] = useState(null);
+  const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
 
   const fetchAgendamentos = useCallback(async () => {
     setLoading(true);
@@ -141,8 +145,10 @@ function AgendaContent() {
           (a.descricao || '').toLowerCase().includes(t) ||
           a.localCorpo.toLowerCase().includes(t) ||
           a.estilo.toLowerCase().includes(t) ||
+          (a.codigoReserva || '').toLowerCase().includes(t) ||
           (a.cliente?.nome || '').toLowerCase().includes(t) ||
-          (a.cliente?.telefone || '').toLowerCase().includes(t);
+          (a.cliente?.telefone || '').toLowerCase().includes(t) ||
+          (a.cliente?.instagram || '').toLowerCase().includes(t);
         if (!match) return false;
       }
       return true;
@@ -176,20 +182,32 @@ function AgendaContent() {
             <span>Agenda & Sessões</span>
           </h1>
           <p className="text-xs text-text-secondary mt-0.5">
-            Visualize os horários marcados, referências, esboços, descrições e locais no corpo
+            Visualize os horários marcados, reservas online confirmadas, referências, esboços e locais no corpo
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingAgendamento(null);
-            setFormModalOpen(true);
-          }}
-          className="btn-primary h-9 px-4 text-xs font-semibold shrink-0"
-        >
-          <Plus size={15} />
-          <span>Novo Agendamento</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShareLinkModalOpen(true)}
+            className="btn-secondary h-9 px-3.5 text-xs font-semibold border-apple-blue/40 text-apple-blue hover:bg-apple-blue/15"
+          >
+            <Link2 size={15} />
+            <span>Link para Cliente</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditingAgendamento(null);
+              setFormModalOpen(true);
+            }}
+            className="btn-primary h-9 px-4 text-xs font-semibold"
+          >
+            <Plus size={15} />
+            <span>Novo Agendamento</span>
+          </button>
+        </div>
       </div>
 
       {/* Layout Principal: Calendário (esquerda) + Horários do Dia / Lista (direita) */}
@@ -317,7 +335,7 @@ function AgendaContent() {
                 type="text"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar cliente, tattoo, local..."
+                placeholder="Buscar cliente, @insta, protocolo, tattoo..."
                 className="input pl-9 h-9 text-xs"
               />
             </div>
@@ -371,15 +389,25 @@ function AgendaContent() {
               </p>
             </div>
             {selectedDayKey && (
-              <button
-                onClick={() => {
-                  setEditingAgendamento(null);
-                  setFormModalOpen(true);
-                }}
-                className="btn-secondary h-8 px-3 text-xs font-semibold"
-              >
-                <Plus size={14} /> Marcar neste dia
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShareLinkModalOpen(true)}
+                  className="btn-secondary h-8 px-3 text-xs font-semibold text-apple-blue border-apple-blue/30"
+                >
+                  <Link2 size={13} /> Enviar link deste dia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingAgendamento(null);
+                    setFormModalOpen(true);
+                  }}
+                  className="btn-secondary h-8 px-3 text-xs font-semibold"
+                >
+                  <Plus size={14} /> Marcar neste dia
+                </button>
+              </div>
             )}
           </div>
 
@@ -393,7 +421,7 @@ function AgendaContent() {
               <p className="text-sm font-medium text-text-secondary">
                 Nenhum horário marcado para este filtro.
               </p>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
                 {selectedDayKey && (
                   <button
                     onClick={() => setSelectedDayKey('')}
@@ -402,6 +430,12 @@ function AgendaContent() {
                     Ver todos os dias
                   </button>
                 )}
+                <button
+                  onClick={() => setShareLinkModalOpen(true)}
+                  className="btn-secondary h-8 px-3 text-xs text-apple-blue border-apple-blue/30"
+                >
+                  <Link2 size={13} /> Enviar link de reserva
+                </button>
                 <button
                   onClick={() => {
                     setEditingAgendamento(null);
@@ -454,9 +488,21 @@ function AgendaContent() {
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${st.badgeClass}`}>
                                 {st.label}
                               </span>
+                              {ag.origem === 'LINK_PUBLICO' ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-apple-blue/15 text-purple-300 border border-apple-blue/35 inline-flex items-center gap-1">
+                                  <ShieldCheck size={10} /> Via Link • Confirmado
+                                </span>
+                              ) : ag.confirmadoPeloCliente ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-ios-green/15 text-ios-green border border-ios-green/30 inline-flex items-center gap-1">
+                                  <ShieldCheck size={10} /> Confirmado p/ Cliente
+                                </span>
+                              ) : null}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary mt-1">
                               <span className="font-semibold text-text-primary">{ag.cliente?.nome}</span>
+                              {ag.cliente?.instagram && (
+                                <span className="text-purple-300 text-[11px]">{ag.cliente.instagram}</span>
+                              )}
                               <span className="flex items-center gap-1 text-ios-amber">
                                 <MapPin size={12} /> {ag.localCorpo}
                               </span>
@@ -464,6 +510,11 @@ function AgendaContent() {
                                 <Sparkles size={12} className="text-apple-blue" /> {ag.estilo}
                                 {ag.tamanhoCm ? ` • ${ag.tamanhoCm}` : ''}
                               </span>
+                              {ag.codigoReserva && (
+                                <span className="text-[10px] font-mono text-text-muted">
+                                  {ag.codigoReserva}
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -520,9 +571,20 @@ function AgendaContent() {
                           </div>
 
                           <div
-                            className="flex items-center gap-2"
+                            className="flex flex-wrap items-center gap-2"
                             onClick={(e) => e.stopPropagation()}
                           >
+                            {ag.tokenReserva && (
+                              <a
+                                href={`/comprovante/${ag.tokenReserva}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-lg bg-apple-blue/15 text-purple-300 border border-apple-blue/30 text-[11px] font-semibold flex items-center gap-1 hover:bg-apple-blue/25 transition-colors"
+                                title="Abrir comprovante oficial de reserva"
+                              >
+                                <FileCheck2 size={11} /> Comprovante
+                              </a>
+                            )}
                             {whatsappClean && (
                               <a
                                 href={`https://wa.me/55${whatsappClean}`}
@@ -576,6 +638,12 @@ function AgendaContent() {
         editingAgendamento={editingAgendamento}
         defaultDate={defaultFormDate}
         onSaved={() => fetchAgendamentos()}
+      />
+
+      <ShareBookingLinkModal
+        isOpen={shareLinkModalOpen}
+        onClose={() => setShareLinkModalOpen(false)}
+        defaultDateKey={selectedDayKey}
       />
     </div>
   );

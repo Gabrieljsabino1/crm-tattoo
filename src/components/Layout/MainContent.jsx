@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useSidebar } from '../../contexts/SidebarContext';
+import { isPublicRoute } from '../../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -24,7 +25,7 @@ export default function MainContent({ children }) {
   const isMobile = useIsMobile(768);
   const pathname = usePathname();
 
-  if (pathname === '/login') {
+  if (isPublicRoute(pathname)) {
     return <main className="flex-1 w-full h-full min-h-screen bg-[#07060A]">{children}</main>;
   }
 
