@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ================= MODELS (Schema isolado: crm_tattoo) =================
+
+model User {
+  id            String        @id @default(uuid())
+  nome          String
+  email         String        @unique
+  senha         String
+  role          String        @default("TATUADOR") // ADMIN | TATUADOR | RECEPCAO
+  especialidade String?
+  agendamentos  Agendamento[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Cliente {
+  id             String        @id @default(uuid())
+  nome           String
+  telefone       String
+  email          String?
+  instagram      String?
+  cidade         String?       @default("Curitiba")
+  dataNascimento String?
+  observacoes    String?
+  agendamentos   Agendamento[]
+  orcamentos     Orcamento[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Agendamento {
+  id                String              @id @default(uuid())
+  codigo            Int                 @default(1)
+  clienteId         String
+  tatuadorId        String?
+
+  titulo            String
+  descricao         String?
+  dataHora          DateTime
+  duracaoMinutos    Int                 @default(120)
+  localCorpo        String
+  estilo            String              @default("Lettering")
+  tamanhoCm         String?
+
+  valorTotal        Float               @default(0)
+  valorSinal        Float               @default(0)
+  sinalPago         Boolean             @default(false)
+  formaPagamento    String?
+
+  status            String              @default("CONFIRMADO") // PENDENTE | CONFIRMADO | EM_ANDAMENTO | CONCLUIDO | CANCELADO
+  observacoesSessao String?
+  concluidoEm       DateTime?
+
+  cliente           Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tatuador          User?               @relation(fields: [tatuadorId], references: [id], onDelete: SetNull)
+  imagens           ImagemAgendamento[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model ImagemAgendamento {
+  id            String      @id @default(uuid())
+  agendamentoId String
+  tipo          String      @default("REFERENCIA") // REFERENCIA | ESBOCO | RESULTADO
+  url           String
+  legenda       String?
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+}
+
+model Orcamento {
+  id                  String   @id @default(uuid())
+  titulo              String
+  clienteId           String
+  descricao           String?
+  localCorpo          String?
+  estilo              String?
+  tamanhoCm           String?
+  valorEstimado       Float    @default(0)
+  status              String   @default("NOVO_PEDIDO") // NOVO_PEDIDO | ORCAMENTO_ENVIADO | AGUARDANDO_SINAL | AGENDADO
+  imagemReferenciaUrl String?
+  cliente             Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
